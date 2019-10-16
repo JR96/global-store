@@ -5,10 +5,14 @@ const express = require("express"),
     passport = require("passport"),
     LocalStrategy = require("passport-local"),
     User = require("./models/user"),
+	async = require("async"),
+	nodemailer = require("nodemailer"),
     methodOverride =  require("method-override");
 
+var crypto = require("crypto");
+
 //DATABASE Config
-mongoose.connect("mongodb://localhost/superstore",{useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true});
+mongoose.connect("mongodb://localhost:27017/superstore",{useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true});
 
 
 //APP Essentials
@@ -84,6 +88,122 @@ app.post("/login", passport.authenticate("local",{
 app.get("/logout", function(req, res) {
    req.logout();
    res.redirect("/");
+});
+
+//FORGOT PASSEORD
+app.get("/forgot", (req, res)=>{
+	res.render("forgot")
+})
+
+app.post("/forgot", (req, res)=>{
+	async.waterfall([
+		function(done){
+			crypto.randomBytes(20, function(err, buf){
+				var token = buf.toString('hex');
+				done(err, token);
+			});
+		},
+		function(token, done){
+			User.findOne({username:req.body.username}, function(err, user){
+				if(!user){
+					console.log("No account with that email address exists");
+					return res.redirect("/forgot");
+				}
+				
+				user.resetPasswordToken = token;
+				user.resetPasswordExpires = Date.now() + 3600000;// 1hourin millisecs
+				
+				user.save(function(err){
+					done(err, token, user);
+				})
+			})
+		},
+		function(token, user, done){
+			var smtpTransport = nodemailer.createTransport({
+				service: 'Gmail',
+				auth:{
+					user: 'codewithchronic@gmail.com',
+					pass: process.env.GMAILPW
+			}
+			});
+			var mailOptions = {
+				to: user.username,
+				from: 'codewithchronic@gmail.com',
+				subject: 'Password Reset',
+				text: 'You are receiving this because you (or someone else) have requested the reset of your password.\n\n'+
+				'Please click on the link below to reset password, or copy and paste this link onto your browser to complete this process.\n\n'+
+				'http://'+ req.headers.host + '/reset/'+token+'\n\n If you did not request this. please ignore this email and you email will remain unchanged.'
+			};
+			smtpTransport.sendMail(mailOptions, function(err){
+				console.log("message sent");
+				done(err, 'done');
+			});
+		}
+	], function(err){
+		if (err) return next(err);
+		res.redirect('/forgot');
+	});
+});
+
+app.get("/reset/:token", function(req, res){
+	User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: {$gt: Date.now() } }, function(err, user){
+		if(!user){
+			return res.redirect("/forgot")
+		}
+		
+		res.render("reset",{token: res.params.token})
+		
+	});
+});
+
+app.post("/reset/:token", function(req, res){
+	async.waterfall([
+		function(done){
+			User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: {$gt: Date.now() } }, function(err, user){
+				if(!user){
+					console.log("token expired")
+					return res.redirect('back');
+				}
+				if(req.body.password === req.body.confirm){
+					user.setPassword(req.body.password, function(err){
+						user.resetPasswordToken = undefined;
+						user.resetPasswordExpires = undefined;
+						
+						user.save(function(err){
+							req.logIn(user, function(err){
+								done(err, user);
+							});
+						});
+					})
+				}else{
+					console.log("Passwords don't match")
+					return res.redirect('back');
+				}
+			});
+		},
+		function(user, done){
+			var smtpTransport = nodemailer.createTransport({
+				service: 'Gmail',
+				auth:{
+					user: 'codewithchronic@gmail.com',
+					pass: process.env.GMAILPW
+			}
+			});
+			var mailOptions = {
+				to: user.username,
+				from: 'codewithchronic@gmail.com',
+				subject: 'Password Reset Successful',
+				text: 'Hello '+user.firstName+'\n\n'+
+				'This is confirmation that the password for your account '+user.username+' was successfully updated'
+			};
+			smtpTransport.sendMail(mailOptions, function(err){
+				console.log("Password changed");
+				done(err);
+			});
+		}
+	], function(err){
+		res.redirect('/')
+	});
 });
 
 app.listen(3000, process.env.IP, function(){
