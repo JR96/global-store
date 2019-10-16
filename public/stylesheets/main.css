@@ -1,0 +1,24 @@
+i.icon{
+    font-size: 2em;
+}
+
+#plusUser{
+    font-size: 1em;
+}
+
+#loginUser{
+    font-size: 1em;
+}
+
+.container.main{
+    margin-top: 5em;
+}
+
+#map{
+    margin-top: 7em;
+    width: 43%;
+}
+#orders{
+    margin-top: 2em;
+    width: auto;
+}

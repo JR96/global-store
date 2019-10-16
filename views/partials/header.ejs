@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title></title>
+         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+         <link rel="stylesheet" type="text/css" href="/stylesheets/main.css">
+         <script src="https://d3js.org/d3.v5.min.js"></script>
+         <script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script>
+    </head>
+    <body>
+        <div class="ui fixed inverted menu">
+            <div class="ui container">
+                <a href="/" class="header item"><i class="barcode icon"></i>SuperStore</a>
+                <a href="#" class="item">Overview</a>
+                <a href="#" class="item">Products</a>
+                <a href="#" class="item">Managers</a>
+                <div class= "right menu">
+                       </div>
+                       <% if(!currentUser){ %>
+                            <a href="/register" class="item"><i id= "plusUser" class="user plus icon"> </i>Sign Up</a>
+                            <a href="/login" class="item"><i id="loginUser" class="user icon"> </i>Login</a></a>
+                        <% }else{ %>
+                             <a href="#" class="item"><i class="user circle icon"></i><%= currentUser.firstName %></a>
+                            <a href="/logout" class="item">Sign Out</a></a>
+                        <% } %>
+                      </div>
+                </div>
+            </div>
+        </div>

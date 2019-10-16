@@ -1,0 +1,31 @@
+<% include ./partials/header %>
+
+<div class="ui main text container segment">
+    <div class="ui huge header">Register</div>
+    <form class="ui form"action="/register" method="POST">
+        <div class="field">
+            <label>First Name</label>
+            <input type="text" name="firstName" autofocus placeholder="First Name">
+        </div>
+        <div class="field">
+            <label>Last Name</label>
+            <input type="text" name="lastName" placeholder="Last Name">
+        </div>
+       <div class="field">
+            <label>Email</label>
+            <input type="text" name="username" placeholder="Email">
+        </div>
+        <div class="field">
+            <label>Phone Number</label>
+            <input type="text" name="phone" placeholder="Phone Number">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Password">
+        </div>
+        
+         <input class="ui primary basic button" type="submit">
+    </form>
+</div>
+
+<% include ./partials/footer %>
